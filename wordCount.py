@@ -19,30 +19,43 @@ if not os.path.exists(text_fname):
 
 w_freq = {}
 
-with open(text_fname, 'r') as f:
-    for line in f:
-        # get rid of newline characters
-        line = line.strip()
+fd = os.open(text_fname, os.O_RDONLY)
+n_bytes = os.fstat(fd).st_size
+bytes = os.read(fd, n_bytes)
 
-        # remove punctuation, quotes, etc.
-        line = re.sub(r'[,.":;]', '', line.strip())
+os.close(fd)
 
-        # split line to words by spaces, tab characters, dashes and quotes
-        words = re.split(r'[\' \t-]', line)
+lines = bytes.decode().split("\n")
 
-        for word in words:
-            # ignore excessive spaces
-            if len(word) == 0:
-                continue
+for line in lines:
+    if len(line) == 0:
+        continue
 
-            word = word.lower()
-            w_freq[word] = w_freq.get(word, 0) + 1
+    # get rid of newline characters
+    line = line.strip()
 
+    # remove punctuation, quotes, etc.
+    line = re.sub(r'[,.":;]', '', line.strip())
+
+    # split line to words by spaces, tab characters, dashes and quotes
+    words = re.split(r'[\' \t-]', line)
+
+    for word in words:
+        # ignore excessive spaces
+        if len(word) == 0:
+            continue
+
+        word = word.lower()
+        w_freq[word] = w_freq.get(word, 0) + 1
 
 # sort the words in ascending order
 asc = sorted(w_freq.keys())
 
 # write, not append
-with open(output_fname, 'w') as f:
-    for word in asc:
-        f.write('%s %s\n' % (word, w_freq[word]))
+fd = os.open(output_fname, os.O_WRONLY)
+
+for word in asc:
+    line = '%s %s\n' % (word, w_freq[word])
+    os.write(fd, line.encode())
+
+os.close(fd)
